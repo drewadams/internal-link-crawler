@@ -30,4 +30,4 @@ If you are planning to reuse and edit this repo, there are a couple of prebuilt 
 
 ### Usage
 
-<span>Run <code class="code">`npm test`</code></span>
+<span>Run `npm test`</span>
