@@ -22,7 +22,7 @@ npm install
 <li>Run <code class="code">`npm run build`</code> or <code class="code">`npm run watch`</code> to build the runnable files</li>
 <li>To run the scraper after build, use <code class="code">`npm run scrape`</code></li>
 <li>JSON will be output to <code class="dir">/data</code></li>
-<li>To combine the JSON files, use <code class="code">`npm run combineFiles</code></li>
+<li>To combine the JSON files, use <code class="code">`npm run combineFiles`</code></li>
 </ol>
 
 ## Tests
