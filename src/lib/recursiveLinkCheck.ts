@@ -1,22 +1,20 @@
+import { CheckerOptions } from "./types/checker.js";
 import { fetchAndParseURL } from "./fetchAndParseURL.js";
 import { stripAnchorsAndParamsFromURLString } from "./stripLinks.js";
 
 export async function recursiveLinkCheck(
-  baseUrl: string,
-  uniqueLinks: Set<string>,
+  baseURL: string,
   options?: CheckerOptions
 ) {
   const TIMEOUT = options?.timeout ?? 5000;
   const MAXDEPTH = options?.maxDepth ?? Infinity;
   const BATCH_SIZE = options?.batchSize ?? 10; // Set the batch size
-  const url = baseUrl;
-
-  let links = await fetchAndParseURL(baseUrl);
-  let depth = options?.maxDepth ?? Infinity;
+  const uniqueLinks = new Set([baseURL + "/"]);
+  let links = await fetchAndParseURL(baseURL, TIMEOUT);
 
   const queue = links.map((link) => {
     if (link.startsWith("/")) {
-      link = url + link;
+      link = baseURL + link;
     }
     return { link, depth: 1 };
   });
@@ -26,7 +24,7 @@ export async function recursiveLinkCheck(
     console.log(queue.length, batch[0].depth);
 
     const results = await Promise.allSettled(
-      batch.map(({ link, depth }) => fetchAndParseURL(link))
+      batch.map(({ link }) => fetchAndParseURL(link, TIMEOUT))
     );
 
     results.forEach((result, index) => {
@@ -36,7 +34,7 @@ export async function recursiveLinkCheck(
           newLinks.forEach((l) => {
             l = stripAnchorsAndParamsFromURLString(l);
             if (l.startsWith("/")) {
-              l = url + l;
+              l = baseURL + l;
             }
             if (!uniqueLinks.has(l)) {
               uniqueLinks.add(l);
@@ -54,8 +52,4 @@ export async function recursiveLinkCheck(
   return uniqueLinks;
 }
 
-interface CheckerOptions {
-  timeout?: number;
-  maxDepth?: number;
-  batchSize?: number; // Add a batchSize option
-}
+export { CheckerOptions };
