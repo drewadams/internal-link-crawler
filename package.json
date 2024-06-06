@@ -8,6 +8,7 @@
     "watch": "tsc -w",
     "build": "tsc",
     "check": "node dist/index.js",
+    "scrape": "node dist/index.js",
     "combineFiles": "node dist/lib/combineFiles.js"
   },
   "keywords": [],
