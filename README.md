@@ -16,14 +16,6 @@ npm install
 
 ## Usage
 
-<style>
-    .dir {
-        color: indianred
-    }
-    .code {
-        color: coral
-    }
-</style>
 <ol>
 <li>Inside of <code class="dir">`src/index.ts`</code>, update the URLs variable with an array of URLs to be scraped</li>
 <li>Update options variable with your desired settings</li>
