@@ -5,6 +5,8 @@ import {
 
 import { writeFile } from "fs/promises";
 
+// List of URLs to crawl
+// No ending slash (/)
 const URLs = ["https://www.google.com", "https://www.bing.com"];
 
 const options: CheckerOptions = {
