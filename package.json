@@ -1,6 +1,6 @@
 {
   "name": "internal-site-crawler",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,8 @@
     "build": "tsc",
     "check": "node dist/index.js",
     "scrape": "node dist/index.js",
-    "combineFiles": "node dist/lib/combineFiles.js"
+    "combineFiles": "node dist/lib/combineFiles.js",
+    "exec": "npx tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
