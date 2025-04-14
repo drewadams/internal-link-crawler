@@ -27,7 +27,7 @@ npm install
 
 ## Tests
 
-If you are planning to reuse and edit this repo, there are a couple of prebuilt Jest tests that can be uses to ensure functionality remains.
+If you are planning to reuse and edit this repo, there are a couple of prebuilt Jest tests.
 
 ### Usage
 
