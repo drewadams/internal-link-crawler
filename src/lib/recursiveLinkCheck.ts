@@ -10,15 +10,23 @@ export async function recursiveLinkCheck(
   const MAX_DEPTH = options?.maxDepth ?? Infinity;
   const BATCH_SIZE = options?.batchSize ?? 10;
 
+  // Normalize base URL - ensure it ends with / for consistent comparison
+  const normalizedBaseURL = baseURL.endsWith("/") ? baseURL : baseURL + "/";
+  
   // Organize links by type
   const links: Record<LinkType, Set<string>> = {
-    internal: new Set<string>([baseURL + "/"]),
+    internal: new Set<string>([normalizedBaseURL]),
     external: new Set<string>(),
     tel: new Set<string>(),
     mailto: new Set<string>(),
   };
 
-  let initialLinks = await fetchAndParseURL(baseURL, TIMEOUT, true); // Always fetch all links
+  let initialLinks = await fetchAndParseURL(
+    baseURL,
+    TIMEOUT,
+    true,
+    options?.basicAuth
+  ); // Always fetch all links
 
   const queue = initialLinks
     .filter((link) => {
@@ -32,7 +40,13 @@ export async function recursiveLinkCheck(
     })
     .map((link) => {
       if (link.startsWith("/")) {
-        link = baseURL + link;
+        // For relative links, we need to construct the full URL properly
+        // Remove any existing path from baseURL and add the relative path
+        const baseUrlObj = new URL(baseURL);
+        link = baseUrlObj.origin + link;
+      }
+      if (link.endsWith("/")) {
+        link = link.slice(0, -1); // Remove trailing slash
       }
       return { link, depth: 1 };
     });
@@ -44,7 +58,9 @@ export async function recursiveLinkCheck(
     );
 
     const results = await Promise.allSettled(
-      batch.map(({ link }) => fetchAndParseURL(link, TIMEOUT, true))
+      batch.map(({ link }) =>
+        fetchAndParseURL(link, TIMEOUT, true, options?.basicAuth)
+      )
     );
 
     results.forEach((result, index) => {
@@ -56,7 +72,9 @@ export async function recursiveLinkCheck(
 
             // Normalize relative links
             if (l.startsWith("/")) {
-              l = baseURL + l;
+              // For relative links, construct full URL using origin only
+              const baseUrlObj = new URL(baseURL);
+              l = baseUrlObj.origin + l;
             }
 
             // Categorize and process
@@ -72,7 +90,9 @@ export async function recursiveLinkCheck(
           });
         }
       } else {
-        console.error(result.reason);
+        console.error(
+          `Failed to fetch: ${batch[index].link} - ${result.reason}`
+        );
       }
     });
   }
@@ -100,14 +120,37 @@ type LinkType = "internal" | "external" | "tel" | "mailto";
 function categorizeLinkType(url: string, baseURL: string): LinkType {
   if (url.startsWith("tel:")) return "tel";
   if (url.startsWith("mailto:")) return "mailto";
+  
+  // Handle hash-only links (should be filtered out or considered invalid)
+  if (url === "#" || url === "") return "external";
 
-  // Check if internal
-  if (url.startsWith("/")) return "internal";
+  // Normalize base URL for comparison
+  const normalizedBaseURL = baseURL.endsWith("/") ? baseURL : baseURL + "/";
+
+  // Check if internal - must start with the full base URL including path
+  if (url.startsWith("/")) {
+    // Relative links are internal if they extend the base path
+    return "internal";
+  }
+  
+  if (url.startsWith(normalizedBaseURL)) {
+    return "internal";
+  }
 
   try {
     const urlObj = new URL(url);
     const baseUrlObj = new URL(baseURL);
-    return urlObj.hostname === baseUrlObj.hostname ? "internal" : "external";
+    
+    // Same hostname check, but also need to check if the path is under the base path
+    if (urlObj.hostname === baseUrlObj.hostname) {
+      const basePath = baseUrlObj.pathname.endsWith("/") ? baseUrlObj.pathname : baseUrlObj.pathname + "/";
+      const urlPath = urlObj.pathname.endsWith("/") ? urlObj.pathname : urlObj.pathname + "/";
+      
+      // Internal if the URL path starts with the base path
+      return urlPath.startsWith(basePath) ? "internal" : "external";
+    }
+    
+    return "external";
   } catch (e) {
     // If URL parsing fails, consider it external
     return "external";
